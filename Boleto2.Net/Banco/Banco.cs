@@ -212,30 +212,25 @@ namespace Boleto2Net
         /// <summary>
         ///     Gera os registros de header do aquivo de remessa
         /// </summary>
-        public abstract string GerarHeaderRemessa(TipoArquivo tipoArquivo, int numeroArquivoRemessa, ref int numeroRegistroGeral);
+        public abstract string GerarHeaderRemessa(ArquivoRemessa arquivo, StatusGeracaoArquivo statusGeracao);
 
         /// <summary>
         ///     Gera registros de detalhe do arquivo remessa
         /// </summary>
-        public abstract string GerarDetalheRemessa(TipoArquivo tipoArquivo, Boleto boleto, ref int numeroRegistro);
+        public abstract string GerarDetalheRemessa(ArquivoRemessa arquivo, Boleto boleto, StatusGeracaoArquivo statusGeracao);
 
         /// <summary>
         ///     Gera os registros de Trailer do arquivo de remessa
         /// </summary>
-        public abstract string GerarTrailerRemessa(TipoArquivo tipoArquivo, int numeroArquivoRemessa,
-            ref int numeroRegistroGeral, decimal valorBoletoGeral,
-            int numeroRegistroCobrancaSimples, decimal valorCobrancaSimples,
-            int numeroRegistroCobrancaVinculada, decimal valorCobrancaVinculada,
-            int numeroRegistroCobrancaCaucionada, decimal valorCobrancaCaucionada,
-            int numeroRegistroCobrancaDescontada, decimal valorCobrancaDescontada);
+        public abstract string GerarTrailerRemessa(ArquivoRemessa arquivo, StatusGeracaoArquivo statusGeracao);
 
-        public string GerarTrailerRemessaCNAB400(ref int numeroRegistroGeral)
+        public virtual string GerarTrailerRemessaCNAB400(ArquivoRemessa arquivo, StatusGeracaoArquivo statusGeracao)
         {
-            numeroRegistroGeral++;
+            statusGeracao.NumeroRegistroGeral++;
             var reg = new TRegistroEDI();
-            reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0001, 001, 0, "9", ' ');                 //001-001
-            reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0002, 393, 0, string.Empty, ' ');        //002-393
-            reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0395, 006, 0, numeroRegistroGeral, '0'); //395-400
+            reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0001, 001, 0, "9"                              , ' '); //001-001
+            reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0002, 393, 0, string.Empty                     , ' '); //002-393
+            reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0395, 006, 0, statusGeracao.NumeroRegistroGeral, '0'); //395-400
             reg.CodificarLinha();
             return reg.LinhaRegistro;
         }

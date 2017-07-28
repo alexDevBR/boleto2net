@@ -36,15 +36,15 @@ namespace Boleto2Net
             return CarteiraFactory<BancoItau>.ObterCarteira(boleto.CarteiraComVariacao);
         }
 
-        public override string GerarHeaderRemessa(TipoArquivo tipoArquivo, int numeroArquivoRemessa, ref int numeroRegistroGeral)
+        public override string GerarHeaderRemessa(ArquivoRemessa arquivo, StatusGeracaoArquivo statusGeracao)
         {
             try
             {
                 var header = Empty;
-                switch (tipoArquivo)
+                switch (arquivo.TipoArquivo)
                 {
                     case TipoArquivo.CNAB400:
-                        header += GerarHeaderRemessaCNAB400(numeroArquivoRemessa, ref numeroRegistroGeral);
+                        header += GerarHeaderRemessaCNAB400(arquivo, statusGeracao);
                         break;
                     default:
                         throw new Exception("Tipo de arquivo inexistente.");
@@ -57,22 +57,22 @@ namespace Boleto2Net
             }
         }
 
-        public override string GerarDetalheRemessa(TipoArquivo tipoArquivo, Boleto boleto, ref int numeroRegistro)
+        public override string GerarDetalheRemessa(ArquivoRemessa arquivo, Boleto boleto, StatusGeracaoArquivo statusGeracao)
         {
             try
             {
                 string detalhe = Empty, strline = Empty;
-                switch (tipoArquivo)
+                switch (arquivo.TipoArquivo)
                 {
                     case TipoArquivo.CNAB400:
-                        detalhe += GerarDetalheRemessaCNAB400Registro1(boleto, ref numeroRegistro);
-                        strline = GerarDetalheRemessaCNAB400Registro2(boleto, ref numeroRegistro);
+                        detalhe += GerarDetalheRemessaCNAB400Registro1(boleto, statusGeracao);
+                        strline = GerarDetalheRemessaCNAB400Registro2(boleto, statusGeracao);
                         if (!IsNullOrWhiteSpace(strline))
                         {
                             detalhe += Environment.NewLine;
                             detalhe += strline;
                         }
-                        strline = GerarDetalheRemessaCNAB400Registro5(boleto, ref numeroRegistro);
+                        strline = GerarDetalheRemessaCNAB400Registro5(boleto, statusGeracao);
                         if (!IsNullOrWhiteSpace(strline))
                         {
                             detalhe += Environment.NewLine;
@@ -90,20 +90,15 @@ namespace Boleto2Net
             }
         }
 
-        public override string GerarTrailerRemessa(TipoArquivo tipoArquivo, int numeroArquivoRemessa,
-            ref int numeroRegistroGeral, decimal valorBoletoGeral,
-            int numeroRegistroCobrancaSimples, decimal valorCobrancaSimples,
-            int numeroRegistroCobrancaVinculada, decimal valorCobrancaVinculada,
-            int numeroRegistroCobrancaCaucionada, decimal valorCobrancaCaucionada,
-            int numeroRegistroCobrancaDescontada, decimal valorCobrancaDescontada)
+        public override string GerarTrailerRemessa(ArquivoRemessa arquivo, StatusGeracaoArquivo statusGeracao)
         {
             try
             {
                 var trailer = Empty;
-                switch (tipoArquivo)
+                switch (arquivo.TipoArquivo)
                 {
                     case TipoArquivo.CNAB400:
-                        trailer = GerarTrailerRemessaCNAB400(ref numeroRegistroGeral);
+                        trailer = GerarTrailerRemessaCNAB400(arquivo, statusGeracao);
                         break;
                     default:
                         throw new Exception("Tipo de arquivo inexistente.");
@@ -185,11 +180,11 @@ namespace Boleto2Net
             throw new NotImplementedException();
         }
 
-        private string GerarHeaderRemessaCNAB400(int numeroArquivoRemessa, ref int numeroRegistroGeral)
+        private string GerarHeaderRemessaCNAB400(ArquivoRemessa arquivo, StatusGeracaoArquivo statusGeracao)
         {
             try
             {
-                numeroRegistroGeral++;
+                statusGeracao.NumeroRegistroGeral++;
                 var reg = new TRegistroEDI();
                 reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0001, 001, 0, "0", '0');
                 reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0002, 001, 0, "1", '0');
@@ -206,7 +201,7 @@ namespace Boleto2Net
                 reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0080, 015, 0, "BANCO ITAU SA", ' ');
                 reg.Adicionar(TTiposDadoEDI.ediDataDDMMAA___________, 0095, 006, 0, DateTime.Now, ' ');
                 reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0101, 294, 0, Empty, ' ');
-                reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0395, 006, 0, numeroRegistroGeral, '0');
+                reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0395, 006, 0, statusGeracao.NumeroRegistroGeral, '0');
                 reg.CodificarLinha();
                 return reg.LinhaRegistro;
             }
@@ -216,11 +211,11 @@ namespace Boleto2Net
             }
         }
 
-        private string GerarDetalheRemessaCNAB400Registro1(Boleto boleto, ref int numeroRegistroGeral)
+        private string GerarDetalheRemessaCNAB400Registro1(Boleto boleto, StatusGeracaoArquivo statusGeracao)
         {
             try
             {
-                numeroRegistroGeral++;
+                statusGeracao.NumeroRegistroGeral++;
                 var reg = new TRegistroEDI();
                 reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0001, 001, 0, "1", '0');
                 reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0002, 002, 0, boleto.Banco.Cedente.TipoCPFCNPJ("00"), '0');
@@ -284,7 +279,7 @@ namespace Boleto2Net
                 reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0386, 006, 0, "0", '0');
                 reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0392, 002, 0, "0", '0');
                 reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0394, 001, 0, Empty, ' ');
-                reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0395, 006, 0, numeroRegistroGeral, '0');
+                reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0395, 006, 0, statusGeracao.NumeroRegistroGeral, '0');
                 reg.CodificarLinha();
                 return reg.LinhaRegistro;
             }
@@ -294,14 +289,14 @@ namespace Boleto2Net
             }
         }
 
-        private string GerarDetalheRemessaCNAB400Registro2(Boleto boleto, ref int numeroRegistroGeral)
+        private string GerarDetalheRemessaCNAB400Registro2(Boleto boleto, StatusGeracaoArquivo statusGeracao)
         {
             try
             {
                 if (boleto.PercentualMulta == 0)
                     return "";
 
-                numeroRegistroGeral++;
+                statusGeracao.NumeroRegistroGeral++;
                 var reg = new TRegistroEDI();
                 reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0001, 001, 0, "2", '0');
                 reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0002, 001, 0, "2", '0');
@@ -312,7 +307,7 @@ namespace Boleto2Net
                 reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0011, 013, 2, boleto.PercentualMulta, '0');
 
                 reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0024, 371, 0, Empty, ' ');
-                reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0395, 006, 0, numeroRegistroGeral, '0');
+                reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0395, 006, 0, statusGeracao.NumeroRegistroGeral, '0');
                 reg.CodificarLinha();
                 return reg.LinhaRegistro;
             }
@@ -322,14 +317,14 @@ namespace Boleto2Net
             }
         }
 
-        private string GerarDetalheRemessaCNAB400Registro5(Boleto boleto, ref int numeroRegistroGeral)
+        private string GerarDetalheRemessaCNAB400Registro5(Boleto boleto, StatusGeracaoArquivo statusGeracao)
         {
             try
             {
                 if (boleto.Avalista.Nome == "")
                     return "";
 
-                numeroRegistroGeral++;
+                statusGeracao.NumeroRegistroGeral++;
                 var reg = new TRegistroEDI();
                 reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0001, 001, 0, "5", '0');
                 reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0002, 120, 0, Empty, ' ');
@@ -341,7 +336,7 @@ namespace Boleto2Net
                 reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0198, 015, 0, boleto.Avalista.Endereco.Cidade, ' ');
                 reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0213, 002, 0, boleto.Avalista.Endereco.UF, ' ');
                 reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0215, 180, 0, Empty, ' ');
-                reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0395, 006, 0, numeroRegistroGeral, '0');
+                reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0395, 006, 0, statusGeracao.NumeroRegistroGeral, '0');
 
                 reg.CodificarLinha();
                 return reg.LinhaRegistro;

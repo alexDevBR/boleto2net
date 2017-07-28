@@ -31,20 +31,15 @@ namespace Boleto2Net
         /// <summary>
         /// Gera o header do arquivo de remessa
         /// </summary>
-        string GerarHeaderRemessa(TipoArquivo tipoArquivo, int numeroArquivoRemessa, ref int numeroRegistro);
+        string GerarHeaderRemessa(ArquivoRemessa arquivo, StatusGeracaoArquivo statusGeracao);
         /// <summary>
         /// Gera o Trailer do arquivo de remessa
         /// </summary>
-        string GerarDetalheRemessa(TipoArquivo tipoArquivo, Boleto boleto, ref int numeroRegistro);
+        string GerarDetalheRemessa(ArquivoRemessa arquivo, Boleto boleto, StatusGeracaoArquivo statusGeracao);
         /// <summary>
         /// Gera o Trailer do arquivo de remessa
         /// </summary>
-        string GerarTrailerRemessa(TipoArquivo tipoArquivo, int numeroArquivoRemessa,
-                                            ref int numeroRegistroGeral, decimal valorBoletoGeral,
-                                            int numeroRegistroCobrancaSimples, decimal valorCobrancaSimples,
-                                            int numeroRegistroCobrancaVinculada, decimal valorCobrancaVinculada,
-                                            int numeroRegistroCobrancaCaucionada, decimal valorCobrancaCaucionada,
-                                            int numeroRegistroCobrancaDescontada, decimal valorCobrancaDescontada);
+        string GerarTrailerRemessa(ArquivoRemessa arquivo, StatusGeracaoArquivo statusGeracaoGeracao);
 
         void LerDetalheRetornoCNAB240SegmentoT(ref Boleto boleto, string registro);
         void LerDetalheRetornoCNAB240SegmentoU(ref Boleto boleto, string registro);

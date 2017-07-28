@@ -20,17 +20,6 @@ namespace Boleto2Net
         {
             try
             {
-                int numeroRegistroGeral = 0,
-                    numeroRegistroCobrancaSimples = 0,
-                    numeroRegistroCobrancaVinculada = 0,
-                    numeroRegistroCobrancaCaucionada = 0,
-                    numeroRegistroCobrancaDescontada = 0;
-                decimal valorBoletoGeral = 0,
-                    valorCobrancaSimples = 0,
-                    valorCobrancaVinculada = 0,
-                    valorCobrancaCaucionada = 0,
-                    valorCobrancaDescontada = 0;
-
                 int tamanhoRegistro;
                 if (this.TipoArquivo == TipoArquivo.CNAB240)
                     tamanhoRegistro = 240;
@@ -39,9 +28,9 @@ namespace Boleto2Net
 
                 StreamWriter arquivoRemessa = new StreamWriter(arquivo, Encoding.GetEncoding("ISO-8859-1"));
                 string strline = String.Empty;
-
+                var statusGeracao = new StatusGeracaoArquivo();
                 // Header do Arquivo
-                strline = Banco.GerarHeaderRemessa(this.TipoArquivo, this.NumeroArquivoRemessa, ref numeroRegistroGeral);
+                strline = Banco.GerarHeaderRemessa(this, statusGeracao);
                 if (String.IsNullOrWhiteSpace(strline))
                     throw new Exception("Registro HEADER obrigatório.");
                 strline = FormataLinhaArquivoCNAB(strline, tamanhoRegistro);
@@ -54,31 +43,31 @@ namespace Boleto2Net
                     boleto.Banco = this.Banco;
 
                     // Detalhe do arquivo
-                    strline = boleto.Banco.GerarDetalheRemessa(this.TipoArquivo, boleto, ref numeroRegistroGeral);
+                    strline = boleto.Banco.GerarDetalheRemessa(this, boleto, statusGeracao);
                     if (String.IsNullOrWhiteSpace(strline))
                         throw new Exception("Registro DETALHE obrigatório.");
                     strline = FormataLinhaArquivoCNAB(strline, tamanhoRegistro);
                     arquivoRemessa.WriteLine(strline);
                     
                     // Ajusta Totalizadores
-                    valorBoletoGeral += boleto.ValorTitulo;
+                    statusGeracao.ValorBoletoGeral += boleto.ValorTitulo;
                     switch (boleto.TipoCarteira)
                     {
                         case TipoCarteira.CarteiraCobrancaSimples:
-                            numeroRegistroCobrancaSimples++;
-                            valorCobrancaSimples += boleto.ValorTitulo;
+                            statusGeracao.NumeroRegistroCobrancaSimples++;
+                            statusGeracao.ValorCobrancaSimples += boleto.ValorTitulo;
                             break;
                         case TipoCarteira.CarteiraCobrancaVinculada:
-                            numeroRegistroCobrancaVinculada++;
-                            valorCobrancaVinculada += boleto.ValorTitulo;
+                            statusGeracao.NumeroRegistroCobrancaVinculada++;
+                            statusGeracao.ValorCobrancaVinculada += boleto.ValorTitulo;
                             break;
                         case TipoCarteira.CarteiraCobrancaCaucionada:
-                            numeroRegistroCobrancaCaucionada++;
-                            valorCobrancaCaucionada += boleto.ValorTitulo;
+                            statusGeracao.NumeroRegistroCobrancaCaucionada++;
+                            statusGeracao.ValorCobrancaCaucionada += boleto.ValorTitulo;
                             break;
                         case TipoCarteira.CarteiraCobrancaDescontada:
-                            numeroRegistroCobrancaDescontada++;
-                            valorCobrancaDescontada += boleto.ValorTitulo;
+                            statusGeracao.NumeroRegistroCobrancaDescontada++;
+                            statusGeracao.ValorCobrancaDescontada += boleto.ValorTitulo;
                             break;
                         default:
                             break;
@@ -86,12 +75,7 @@ namespace Boleto2Net
                 }
 
                 // Trailler do Arquivo
-                strline = Banco.GerarTrailerRemessa(this.TipoArquivo, this.NumeroArquivoRemessa,
-                                                            ref numeroRegistroGeral, valorBoletoGeral,
-                                                            numeroRegistroCobrancaSimples, valorCobrancaSimples,
-                                                            numeroRegistroCobrancaVinculada, valorCobrancaVinculada,
-                                                            numeroRegistroCobrancaCaucionada, valorCobrancaCaucionada,
-                                                            numeroRegistroCobrancaDescontada, valorCobrancaDescontada);
+                strline = Banco.GerarTrailerRemessa(this, statusGeracao);
                 if (!String.IsNullOrWhiteSpace(strline))
                 {
                     strline = FormataLinhaArquivoCNAB(strline, tamanhoRegistro);
