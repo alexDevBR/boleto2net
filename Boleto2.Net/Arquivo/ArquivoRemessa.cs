@@ -48,30 +48,8 @@ namespace Boleto2Net
                         throw new Exception("Registro DETALHE obrigatório.");
                     strline = FormataLinhaArquivoCNAB(strline, tamanhoRegistro);
                     arquivoRemessa.WriteLine(strline);
-                    
-                    // Ajusta Totalizadores
-                    statusGeracao.ValorBoletoGeral += boleto.ValorTitulo;
-                    switch (boleto.TipoCarteira)
-                    {
-                        case TipoCarteira.CarteiraCobrancaSimples:
-                            statusGeracao.NumeroRegistroCobrancaSimples++;
-                            statusGeracao.ValorCobrancaSimples += boleto.ValorTitulo;
-                            break;
-                        case TipoCarteira.CarteiraCobrancaVinculada:
-                            statusGeracao.NumeroRegistroCobrancaVinculada++;
-                            statusGeracao.ValorCobrancaVinculada += boleto.ValorTitulo;
-                            break;
-                        case TipoCarteira.CarteiraCobrancaCaucionada:
-                            statusGeracao.NumeroRegistroCobrancaCaucionada++;
-                            statusGeracao.ValorCobrancaCaucionada += boleto.ValorTitulo;
-                            break;
-                        case TipoCarteira.CarteiraCobrancaDescontada:
-                            statusGeracao.NumeroRegistroCobrancaDescontada++;
-                            statusGeracao.ValorCobrancaDescontada += boleto.ValorTitulo;
-                            break;
-                        default:
-                            break;
-                    }
+
+                    statusGeracao.AjustaTotalizadores(boleto);
                 }
 
                 // Trailler do Arquivo

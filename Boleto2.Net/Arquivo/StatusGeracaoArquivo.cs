@@ -18,5 +18,31 @@ namespace Boleto2Net
         public decimal ValorCobrancaVinculada           = 0;
         public decimal ValorCobrancaCaucionada          = 0;
         public decimal ValorCobrancaDescontada          = 0;
+
+        internal void AjustaTotalizadores(Boleto boleto)
+        {
+            ValorBoletoGeral += boleto.ValorTitulo;
+            switch (boleto.TipoCarteira)
+            {
+                case TipoCarteira.CarteiraCobrancaSimples:
+                    NumeroRegistroCobrancaSimples++;
+                    ValorCobrancaSimples += boleto.ValorTitulo;
+                    break;
+                case TipoCarteira.CarteiraCobrancaVinculada:
+                    NumeroRegistroCobrancaVinculada++;
+                    ValorCobrancaVinculada += boleto.ValorTitulo;
+                    break;
+                case TipoCarteira.CarteiraCobrancaCaucionada:
+                    NumeroRegistroCobrancaCaucionada++;
+                    ValorCobrancaCaucionada += boleto.ValorTitulo;
+                    break;
+                case TipoCarteira.CarteiraCobrancaDescontada:
+                    NumeroRegistroCobrancaDescontada++;
+                    ValorCobrancaDescontada += boleto.ValorTitulo;
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 }
