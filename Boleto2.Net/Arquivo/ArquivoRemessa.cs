@@ -6,9 +6,11 @@ namespace Boleto2Net
 {
     public class ArquivoRemessa // : AbstractArquivoRemessa, IArquivoRemessa
     {
-        public IBanco Banco { get; set; }
-        public TipoArquivo TipoArquivo { get; set; }
-        public int NumeroArquivoRemessa { get; set; }
+        public IBanco      Banco                { get; set; }
+        public TipoArquivo TipoArquivo          { get; set; }
+        public int         NumeroArquivoRemessa { get; set; }
+        public Encoding    Encoding             { get; set; } = Encoding.GetEncoding("ISO-8859-1");
+
         public ArquivoRemessa(IBanco banco, TipoArquivo tipoArquivo, int numeroArquivoRemessa)
         {
             Banco = banco;
@@ -18,22 +20,23 @@ namespace Boleto2Net
 
         public void GerarArquivoRemessa(Boletos boletos, Stream arquivo)
         {
-            try
-            {
-                int tamanhoRegistro;
-                if (this.TipoArquivo == TipoArquivo.CNAB240)
-                    tamanhoRegistro = 240;
-                else
-                    tamanhoRegistro = 400;
+            int tamanhoRegistro;
+            if (this.TipoArquivo == TipoArquivo.CNAB240)
+                tamanhoRegistro = 240;
+            else
+                tamanhoRegistro = 400;
 
-                StreamWriter arquivoRemessa = new StreamWriter(arquivo, Encoding.GetEncoding("ISO-8859-1"));
-                string strline = String.Empty;
+            using (var arquivoRemessa = new StreamWriter(arquivo, Encoding))
+            {
                 var statusGeracao = new StatusGeracaoArquivo();
                 // Header do Arquivo
-                strline = Banco.GerarHeaderRemessa(this, statusGeracao);
+                var strline = Banco.GerarHeaderRemessa(this, statusGeracao);
+
                 if (String.IsNullOrWhiteSpace(strline))
                     throw new Exception("Registro HEADER obrigatório.");
+
                 strline = FormataLinhaArquivoCNAB(strline, tamanhoRegistro);
+
                 arquivoRemessa.WriteLine(strline);
 
                 foreach (Boleto boleto in boletos)
@@ -44,8 +47,10 @@ namespace Boleto2Net
 
                     // Detalhe do arquivo
                     strline = boleto.Banco.GerarDetalheRemessa(this, boleto, statusGeracao);
+
                     if (String.IsNullOrWhiteSpace(strline))
                         throw new Exception("Registro DETALHE obrigatório.");
+
                     strline = FormataLinhaArquivoCNAB(strline, tamanhoRegistro);
                     arquivoRemessa.WriteLine(strline);
 
@@ -59,14 +64,6 @@ namespace Boleto2Net
                     strline = FormataLinhaArquivoCNAB(strline, tamanhoRegistro);
                     arquivoRemessa.WriteLine(strline);
                 }
-
-                arquivoRemessa.Close();
-                arquivoRemessa.Dispose();
-                arquivoRemessa = null;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Erro ao gerar arquivo remessa.", ex);
             }
         }
 
